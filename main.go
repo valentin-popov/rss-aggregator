@@ -13,9 +13,9 @@ import (
 func main() {
 	godotenv.Load()
 
-	port := os.Getenv("PORT")
+	port := os.Getenv(PORT)
 	if port == "" {
-		log.Fatal("Port is undefined.")
+		log.Fatal(ERR_PORT_UNDEF)
 	}
 
 	router := chi.NewRouter()
@@ -28,6 +28,7 @@ func main() {
 
 	v1Router := chi.NewRouter()
 	v1Router.Post("/user", userController.create)
+	v1Router.Get("/user", userController.getUserByKey)
 	v1Router.Get("/error", handlerError)
 
 	router.Mount("/v1", v1Router)
@@ -41,7 +42,7 @@ func main() {
 
 	log.Printf("Server listening on port %v", port)
 	if server.ListenAndServe() == nil {
-		log.Fatal("Could not start server.")
+		log.Fatal(ERR_START_SRV)
 	}
 
 }

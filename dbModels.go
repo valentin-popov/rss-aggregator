@@ -9,6 +9,7 @@ type User struct {
 	LastName  string             `bson:"last_name" json:"lastName"`
 	CreatedAt primitive.DateTime `bson:"created_at" json:"createdAt"`
 	UpdatedAt primitive.DateTime `bson:"updated_at" json:"updatedAt"`
+	Secret    string             `bson:"secret" json:"secret"`
 }
 
 type ObjectId struct {

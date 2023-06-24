@@ -26,15 +26,15 @@ func getDB() *mongo.Database {
 		return db
 	}
 
-	dbURI := os.Getenv("MONGODB_URI")
-	dbName := os.Getenv("DBNAME")
+	dbURI := os.Getenv(MONGODB_URI)
+	dbName := os.Getenv(DBNAME)
 
 	if dbURI == "" {
-		log.Fatal(EMPTY_DB_URI)
+		log.Fatal(ERR_EMPTY_DB_URI)
 	}
 
 	if dbName == "" {
-		log.Fatal(EMPTY_DB_NAME)
+		log.Fatal(ERR_EMPTY_DB_NAME)
 	}
 
 	dbClient, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(dbURI))
