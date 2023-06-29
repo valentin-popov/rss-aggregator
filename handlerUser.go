@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -22,7 +23,7 @@ var userController dbController = dbController{
 	),
 }
 
-func (userController *dbController) create(w http.ResponseWriter, r *http.Request) {
+func (userController *dbController) createUser(w http.ResponseWriter, r *http.Request) {
 
 	userData := struct {
 		FirstName string `json:"firstName"`
@@ -38,17 +39,17 @@ func (userController *dbController) create(w http.ResponseWriter, r *http.Reques
 	}
 
 	byte32Arr := sha256.Sum256([]byte(strconv.Itoa(rand.Int())))
-	byteArr := byte32Arr[:]
 
 	user := User{
+		Id:        primitive.NewObjectID(),
 		FirstName: userData.FirstName,
 		LastName:  userData.LastName,
 		CreatedAt: primitive.NewDateTimeFromTime(time.Now()),
 		UpdatedAt: primitive.NewDateTimeFromTime(time.Now()),
-		Secret:    hex.EncodeToString(byteArr),
+		Secret:    hex.EncodeToString(byte32Arr[:]),
 	}
 
-	result, err := userController.collection.InsertOne(
+	_, err = userController.collection.InsertOne(
 		context.TODO(),
 		user,
 	)
@@ -58,45 +59,43 @@ func (userController *dbController) create(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	userId := ObjectId{
-		result.InsertedID.(primitive.ObjectID).Hex(),
-	}
-
-	response := struct {
-		ObjectId
-		User
-	}{
-		userId,
-		user,
-	}
-
-	sendJSON(w, 200, response)
+	sendJSON(w, 200, user)
 }
 
 // uses the API key extracted from one of the headers
 // to fetch an user
-func (userController *dbController) getUserByKey(w http.ResponseWriter, r *http.Request) {
+func (userController *dbController) getAuthUser(w http.ResponseWriter, r *http.Request) {
 	apiKey, err := auth.GetAPIKey(r.Header)
 
 	if err != nil {
 		sendError(w, http.StatusUnauthorized, ERR_UNAUTHORIZED)
 		return
 	}
+	user, err := userController.getUserByKey(apiKey)
+
+	if err != nil {
+		e := errorObject{
+			err.Error(),
+		}
+		e.handleError(w, r)
+		return
+	}
+
+	sendJSON(w, http.StatusOK, user)
+}
+
+func (userController *dbController) getUserByKey(apiKey string) (*User, error) {
 
 	var user User
-	err = userController.collection.FindOne(context.TODO(), bson.M{
+	err := userController.collection.FindOne(context.TODO(), bson.M{
 		"secret": apiKey,
 	}).Decode(&user)
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			// query matched no results
-			sendError(w, http.StatusUnauthorized, ERR_UNAUTHORIZED)
-			return
+			return nil, errors.New(ERR_UNAUTHORIZED)
 		}
-		sendError(w, http.StatusInternalServerError, ERR_INTERNAL_SRV)
-		return
+		return nil, errors.New(ERR_INTERNAL_SRV)
 	}
-
-	sendJSON(w, http.StatusOK, user)
+	return &user, nil
 }
