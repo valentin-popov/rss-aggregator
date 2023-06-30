@@ -27,10 +27,10 @@ func main() {
 	}))
 
 	v1Router := chi.NewRouter()
-	v1Router.Post("/user", userController.create)
-	v1Router.Get("/user", userController.getUserByKey)
-	v1Router.Get("/error", handlerError)
+	v1Router.Post("/user", userController.createUser)
+	v1Router.Get("/user", userController.getAuthUser)
 
+	v1Router.Post("/feed", feedController.createFeed)
 	router.Mount("/v1", v1Router)
 
 	defer closeDBClient()
