@@ -13,14 +13,13 @@ func sendJSON(writer http.ResponseWriter, statusCode int, payload interface{}) {
 	if err != nil {
 
 		fmt.Printf("Unable to marshal JSON: %v", payload)
-		writer.WriteHeader(500)
+		writer.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	writer.Header().Add("Content-Type", "application/json")
 	writer.WriteHeader(statusCode)
 	writer.Write(data)
-
 }
 
 func sendError(w http.ResponseWriter, statusCode int, errorMessage string) {

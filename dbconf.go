@@ -12,6 +12,7 @@ import (
 
 var collections = map[string]string{
 	"user": "users",
+	"feed": "feeds",
 }
 
 var db *mongo.Database
