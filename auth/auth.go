@@ -10,7 +10,7 @@ func GetAPIKey(headers http.Header) (string, error) {
 	apiKey := headers.Get("X-API-KEY")
 
 	if apiKey == "" {
-		return "", errors.New("no auth info found")
+		return "", errors.New("empty_api_key")
 	}
 
 	return apiKey, nil

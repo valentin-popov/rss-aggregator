@@ -1,4 +1,4 @@
-package main
+package db
 
 import (
 	"context"
@@ -11,8 +11,9 @@ import (
 )
 
 var collections = map[string]string{
-	"user": "users",
-	"feed": "feeds",
+	"user":       "users",
+	"feed":       "feeds",
+	"feedfollow": "feed_follows",
 }
 
 var db *mongo.Database
@@ -31,34 +32,30 @@ func getDB() *mongo.Database {
 	dbName := os.Getenv(DBNAME)
 
 	if dbURI == "" {
-		log.Fatal(ERR_EMPTY_DB_URI)
+		log.Fatal(ERR_MSG_DB_EMPTY_URI)
 	}
 
 	if dbName == "" {
-		log.Fatal(ERR_EMPTY_DB_NAME)
+		log.Fatal(ERR_MSG_DB_EMPTY_NAME)
 	}
 
 	dbClient, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(dbURI))
 	if err != nil {
-		log.Fatal(ERR_DB_CONN)
+		log.Fatal(ERR_MSG_DB_CONN)
 	}
 
-	db := dbClient.Database(dbName)
+	db = dbClient.Database(dbName)
 	return db
 }
 
-func closeDBClient() {
+func CloseDBClient() {
 	if dbClient == nil {
 		return
 	}
 
 	err := dbClient.Disconnect(context.TODO())
 	if err != nil {
-		log.Fatal(ERR_DB_DISCONN)
+		log.Fatal(ERR_MSG_DB_DISCONN)
 	}
 
-}
-
-type dbController struct {
-	collection *mongo.Collection
 }

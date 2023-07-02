@@ -1,29 +1,20 @@
 package main
 
 import (
-	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/valentin-popov/rss-aggregator/auth"
-	"go.mongodb.org/mongo-driver/bson"
+	"github.com/valentin-popov/rss-aggregator/db"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
-var userController dbController = dbController{
-	collection: getDB().Collection(
-		collections["user"],
-	),
-}
-
-func (userController *dbController) createUser(w http.ResponseWriter, r *http.Request) {
+func createUser(w http.ResponseWriter, r *http.Request) {
 
 	userData := struct {
 		FirstName string `json:"firstName"`
@@ -34,7 +25,7 @@ func (userController *dbController) createUser(w http.ResponseWriter, r *http.Re
 	err := decoder.Decode(&userData)
 
 	if err != nil {
-		sendError(w, http.StatusBadRequest, ERR_JSON)
+		handleClientError(ERR_CODE_JSON, w, r)
 		return
 	}
 
@@ -45,57 +36,54 @@ func (userController *dbController) createUser(w http.ResponseWriter, r *http.Re
 		FirstName: userData.FirstName,
 		LastName:  userData.LastName,
 		CreatedAt: primitive.NewDateTimeFromTime(time.Now()),
-		UpdatedAt: primitive.NewDateTimeFromTime(time.Now()),
 		Secret:    hex.EncodeToString(byte32Arr[:]),
 	}
 
-	_, err = userController.collection.InsertOne(
-		context.TODO(),
-		user,
-	)
-
+	err = db.AddUser(userToDTO(user))
 	if err != nil {
-		sendError(w, http.StatusInternalServerError, ERR_DB_INSERT)
-		return
+		handleServerError(ERR_CODE_INS_OBJ, w, r)
 	}
+	sendJSON(w, http.StatusOK, user)
 
-	sendJSON(w, 200, user)
 }
 
-// uses the API key extracted from one of the headers
-// to fetch an user
-func (userController *dbController) getAuthUser(w http.ResponseWriter, r *http.Request) {
+// Uses the API key extracted from one of the headers
+// to fetch an user.
+func getAuthUser(w http.ResponseWriter, r *http.Request) {
 	apiKey, err := auth.GetAPIKey(r.Header)
 
 	if err != nil {
-		sendError(w, http.StatusUnauthorized, ERR_UNAUTHORIZED)
+		handleClientError(ERR_CODE_EMPTY_KEY, w, r)
 		return
 	}
-	user, err := userController.getUserByKey(apiKey)
+	userDTO, err := db.GetUserByKey(apiKey)
 
 	if err != nil {
-		e := errorObject{
-			err.Error(),
-		}
-		e.handleError(w, r)
+		handleClientError(ERR_CODE_UNAUTHORIZED, w, r)
 		return
 	}
-
-	sendJSON(w, http.StatusOK, user)
+	sendJSON(w, http.StatusOK, dtoToUser(userDTO))
 }
 
-func (userController *dbController) getUserByKey(apiKey string) (*User, error) {
-
-	var user User
-	err := userController.collection.FindOne(context.TODO(), bson.M{
-		"secret": apiKey,
-	}).Decode(&user)
-
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil, errors.New(ERR_UNAUTHORIZED)
-		}
-		return nil, errors.New(ERR_INTERNAL_SRV)
+// Maps a DB user to an user, excludes some unwanted properties.
+func dtoToUser(dto db.UserDTO) User {
+	return User{
+		Id:        dto.Id,
+		FirstName: dto.FirstName,
+		LastName:  dto.LastName,
+		Secret:    dto.Secret,
+		CreatedAt: dto.CreatedAt,
 	}
-	return &user, nil
+}
+
+// Probably needs to be moved to db.
+func userToDTO(user User) db.UserDTO {
+	return db.UserDTO{
+		Id:        user.Id,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Secret:    user.Secret,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.CreatedAt,
+	}
 }
