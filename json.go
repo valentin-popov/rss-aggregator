@@ -8,6 +8,15 @@ import (
 )
 
 func sendJSON(writer http.ResponseWriter, statusCode int, payload interface{}) {
+
+	writer.Header().Add("Content-Type", "application/json")
+
+	if payload == nil && statusCode == http.StatusNoContent {
+		// payload sent empty intentionally
+		writer.WriteHeader(statusCode)
+		return
+	}
+
 	data, err := json.Marshal(payload)
 
 	if err != nil {
@@ -17,7 +26,6 @@ func sendJSON(writer http.ResponseWriter, statusCode int, payload interface{}) {
 		return
 	}
 
-	writer.Header().Add("Content-Type", "application/json")
 	writer.WriteHeader(statusCode)
 	writer.Write(data)
 }
