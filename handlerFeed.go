@@ -83,7 +83,6 @@ func findFeed(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		handleServerError(ERR_CODE_FETCH_DOCS, w, r)
-
 		return
 	}
 

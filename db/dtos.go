@@ -27,5 +27,4 @@ type FeedFollowDTO struct {
 	UserId    primitive.ObjectID `bson:"user_id"`
 	FeedId    primitive.ObjectID `bson:"feed_id"`
 	CreatedAt primitive.DateTime `bson:"created_at"`
-	UpdatedAt primitive.DateTime `bson:"updated_at"`
 }

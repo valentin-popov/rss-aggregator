@@ -3,6 +3,8 @@ package db
 const ERR_UNAUTHORIZED string = "unauthorized"
 const ERR_INTERNAL_SRV string = "int_sr"
 const ERR_INV_ID string = "inv_obj_id"
+const ERR_DUPL_KEY_REC string = "duplicate_key_record"
+const ERR_NO_DOC string = "no_doc_match"
 
 // Error messages logged to console.
 const ERR_MSG_DB_CONN string = "Cannot connect to database"

@@ -5,6 +5,13 @@ import "net/http"
 const ERR_SRV string = "server"
 const ERR_CLIENT string = "client"
 
+// More specific client or server error messages
+var customErrors = map[string]map[string]string{
+	"insert": {
+		ERR_CODE_DUPL_KEY_REC: "client",
+	},
+}
+
 var errorMap = map[string]struct {
 	status  int
 	message string
@@ -28,6 +35,14 @@ var errorMap = map[string]struct {
 	ERR_CODE_EMPTY_KEY: {
 		status:  http.StatusBadRequest,
 		message: ERR_MSG_EMPTY_KEY,
+	},
+	ERR_CODE_DUPL_KEY_REC: {
+		status:  http.StatusBadRequest,
+		message: ERR_MSG_DUPL_KEY_REC,
+	},
+	ERR_CODE_NO_DOC: {
+		status:  http.StatusBadRequest,
+		message: ERR_MSG_NO_DOC,
 	},
 
 	ERR_CODE_INTERNAL_SRV: {

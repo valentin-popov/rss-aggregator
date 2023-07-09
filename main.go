@@ -35,6 +35,10 @@ func main() {
 	v1Router.Post("/feed", createFeed)
 	v1Router.Get("/feed", findFeeds)
 	v1Router.Get("/feed/{feedId}", findFeed)
+	v1Router.Post("/follow", followFeed)
+	v1Router.Delete("/follow/{feedId}", unfollowFeed)
+	v1Router.Get("/follow", findFollowedFeeds)
+
 	router.Mount("/v1", v1Router)
 
 	defer db.CloseDBClient()
